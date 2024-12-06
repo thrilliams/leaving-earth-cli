@@ -10,7 +10,7 @@
 	],
 	"dependencies": {
 		"kleur": "^4.1.5",
-		"leaving-earth": "git+ssh://git@github.com/thrilliams/leaving-earth.git#957aa6fc821a8d8f313b5623e90461f075143cb4",
+		"leaving-earth": "git+ssh://git@github.com/thrilliams/leaving-earth.git#38d56c137c2bd97a2549bc08bb8aacd3b0887264",
 		"lru-cache": "^11.0.2",
 		"picocolors": "^1.1.1",
 		"prompts": "^2.4.2"
