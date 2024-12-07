@@ -23,6 +23,8 @@ function getSpacecraftIDsThatCanSurvey(
 	const spacecraftIDs = [];
 	const agency = getAgency(model, decision.agencyID);
 	for (const spacecraft of agency.spacecraft) {
+		if (spacecraft.years > 0) continue;
+
 		const surveyableLocationIDs = getSurveyableLocations(
 			model,
 			spacecraft.locationID
