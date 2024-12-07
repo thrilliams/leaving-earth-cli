@@ -55,6 +55,7 @@ async function pickDurationModifier(
 			type: "number",
 			name: "selectedDurationModifier",
 			message: "select duration modifier (none)",
+			initial: decision.durationModifier,
 			onRender(this: any) {
 				this.value =
 					this.value === undefined
