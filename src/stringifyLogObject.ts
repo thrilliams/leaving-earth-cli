@@ -58,7 +58,7 @@ function stringifyLogObjectContext(
 		if (context[1] === "major_failure") return kleur.red("major failure");
 	}
 	if (context[0] === "advancement") return context[1];
-	if (context[0] === "maneuver") return context[1];
+	if (context[0] === "maneuver") return `${context[1]}/${context[2]}`;
 	if (context[0] === "mission") return context[1];
 
 	// unknown context type fallback

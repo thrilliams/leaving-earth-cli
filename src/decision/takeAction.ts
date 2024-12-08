@@ -32,6 +32,7 @@ import {
 	repairComponents,
 } from "./action/repairComponents";
 import { canHealAstronauts, healAstronauts } from "./action/healAstronauts";
+import { canDiscardExplorer, discardExplorer } from "./action/discardExplorer";
 
 async function chooseAndAttemptAction(
 	model: Immutable<Model>,
@@ -42,6 +43,9 @@ async function chooseAndAttemptAction(
 		name: "action",
 		message: `take an action`,
 		choices: [
+			{
+				title: "end turn",
+			},
 			{
 				title: "research advancement",
 				disabled: !canResearchAdvancement(model, decision),
@@ -91,31 +95,34 @@ async function chooseAndAttemptAction(
 				disabled: !canHealAstronauts(model, decision),
 			},
 			// cooperate
+			// outer planets
 			{
-				title: "end turn",
+				title: "discard explorer to complete mission",
+				disabled: !canDiscardExplorer(model, decision),
 			},
 		],
 		initial: 0,
 	});
 
-	if (action === 0) return researchAdvancement(model, decision);
-	if (action === 1) return buyComponent(model, decision);
-	if (action === 2) return assembleSpacecraft(model, decision);
-	if (action === 3) return disassembleSpacecraft(model, decision);
-	if (action === 4) return performManeuver(model, decision);
-	if (action === 5) return dockSpacecraft(model, decision);
-	if (action === 6) return separateSpacecraft(model, decision);
-	if (action === 7) return surveyLocation(model, decision);
-	if (action === 8) return collectSample(model, decision);
-	if (action === 9) return collectSupplies(model, decision);
-	if (action === 10) return repairComponents(model, decision);
-	if (action === 11) return healAstronauts(model, decision);
-	if (action === 12)
+	if (action === 0)
 		return {
 			type: "take_action",
 			action: "end_turn",
 			pass: decision.firstOfTurn || false,
 		};
+	if (action === 1) return researchAdvancement(model, decision);
+	if (action === 2) return buyComponent(model, decision);
+	if (action === 3) return assembleSpacecraft(model, decision);
+	if (action === 4) return disassembleSpacecraft(model, decision);
+	if (action === 5) return performManeuver(model, decision);
+	if (action === 6) return dockSpacecraft(model, decision);
+	if (action === 7) return separateSpacecraft(model, decision);
+	if (action === 8) return surveyLocation(model, decision);
+	if (action === 9) return collectSample(model, decision);
+	if (action === 10) return collectSupplies(model, decision);
+	if (action === 11) return repairComponents(model, decision);
+	if (action === 12) return healAstronauts(model, decision);
+	if (action === 13) return discardExplorer(model, decision);
 
 	if (action === undefined) {
 		const { exit } = await prompts({

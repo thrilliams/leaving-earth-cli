@@ -56,8 +56,8 @@ export function stringifyComponent(
 	if (capsuleInfo && definition.type === "capsule") {
 		addendum.push(definition.capacity + "s");
 		if (definition.heatShields) addendum.push("r");
-		if (definition.radiationProtection)
-			addendum.push(definition.radiationProtection + "p");
+		if (definition.radiationShielding)
+			addendum.push(definition.radiationShielding + "p");
 	}
 
 	return string + (addendum.length > 0 ? ` (${addendum.join("; ")})` : "");
@@ -83,8 +83,8 @@ export function stringifyComponentDefinition(
 	if (capsuleInfo && definition.type === "capsule") {
 		addendum.push(definition.capacity + "s");
 		if (definition.heatShields) addendum.push("r");
-		if (definition.radiationProtection)
-			addendum.push(definition.radiationProtection + "p");
+		if (definition.radiationShielding)
+			addendum.push(definition.radiationShielding + "p");
 	}
 
 	return string + (addendum.length > 0 ? ` (${addendum.join("; ")})` : "");
@@ -124,26 +124,41 @@ export function stringifySpacecraft(
 
 export function stringifyManeuver(
 	model: Immutable<Model>,
-	maneuverID: ManeuverID
+	maneuverID: ManeuverID,
+	profileIndex: number
 ) {
+	const maneuver = getManeuver(model, maneuverID);
+	const profile = maneuver.profiles[profileIndex];
 	const [origin, destination] = getManeuverOriginAndDestination(
 		model,
 		maneuverID
 	);
-	const maneuver = getManeuver(model, maneuverID);
+
 	let string = `from ${origin} to ${destination}, D${
-		maneuver.difficulty === null ? "!" : maneuver.difficulty
+		profile.difficulty === null ? "!" : profile.difficulty
 	}`;
 
-	if (maneuver.duration !== undefined)
-		string += maneuver.duration === null ? " Y-" : ` Y${maneuver.duration}`;
+	if (profile.slingshot)
+		string += ` available on ${profile.slingshot} window`;
 
-	if (maneuver.hazards.radiation) string += " R";
-	if (maneuver.hazards.re_entry) string += " N";
-	if (maneuver.hazards.landing)
-		string += maneuver.hazards.landing.optional ? " [L]" : " L";
-	if (maneuver.hazards.location)
-		string += ` H(${maneuver.hazards.location.locationID})`;
+	for (const hazard of profile.hazards) {
+		if (hazard.type === "duration")
+			string += hazard.years === 0 ? " Y-" : ` Y${hazard.years}`;
+		if (hazard.type === "re_entry") string += " N";
+		if (hazard.type === "landing")
+			string += hazard.optional ? " [L]" : " L";
+		if (
+			hazard.type === "location" &&
+			hazard.locationID === "solar_radiation"
+		)
+			string += " R";
+		if (
+			hazard.type === "location" &&
+			hazard.locationID !== "solar_radiation"
+		)
+			string += ` H(${hazard.locationID})`;
+		if (hazard.type === "aerobraking") string += " A";
+	}
 
 	return string;
 }

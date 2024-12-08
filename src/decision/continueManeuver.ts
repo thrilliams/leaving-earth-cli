@@ -3,6 +3,7 @@ import {
 	getComponent,
 	getComponentDefinition,
 	getManeuver,
+	getManeuverDuration,
 	getSpacecraft,
 	getSpacecraftMass,
 	getTotalThrustOfRockets,
@@ -48,9 +49,15 @@ async function pickDurationModifier(
 	decision: Immutable<ContinueManeuverDecision>
 ): Promise<ContinueManeuverChoice> {
 	const maneuver = getManeuver(model, decision.maneuverID);
+	const profile = maneuver.profiles[decision.profileIndex];
+	const maneuverDuration = getManeuverDuration(
+		model,
+		decision.maneuverID,
+		decision.profileIndex
+	);
 
 	let durationModifier: number | undefined = undefined;
-	if (maneuver.duration !== undefined) {
+	if (maneuverDuration !== undefined) {
 		let { selectedDurationModifier } = await prompts({
 			type: "number",
 			name: "selectedDurationModifier",
@@ -64,8 +71,8 @@ async function pickDurationModifier(
 
 				const { duration, difficulty } =
 					modifyManeuverDifficultyAndDuration(
-						maneuver.duration || 0,
-						maneuver.difficulty || 0,
+						maneuverDuration || 0,
+						profile.difficulty || 0,
 						this.value
 					);
 
@@ -107,9 +114,16 @@ async function pickRockets(
 	}
 
 	const maneuver = getManeuver(model, decision.maneuverID);
+	const profile = maneuver.profiles[decision.profileIndex];
+	const maneuverDuration = getManeuverDuration(
+		model,
+		decision.maneuverID,
+		decision.profileIndex
+	);
+
 	const { duration, difficulty } = modifyManeuverDifficultyAndDuration(
-		maneuver.duration || 0,
-		maneuver.difficulty || 0,
+		maneuverDuration || 0,
+		profile.difficulty || 0,
 		durationModifier || 0
 	);
 
@@ -139,7 +153,7 @@ async function pickRockets(
 		});
 
 		if (selectedRocketIDs === undefined) {
-			if (maneuver.duration !== undefined)
+			if (maneuverDuration !== undefined)
 				return pickDurationModifier(model, decision);
 			return continueManeuver(model, decision);
 		}
@@ -153,7 +167,7 @@ async function pickRockets(
 		difficulty * mass
 	) {
 		console.log("insufficient thrust generated");
-		if (maneuver.duration !== undefined)
+		if (maneuverDuration !== undefined)
 			return pickDurationModifier(model, decision);
 		return continueManeuver(model, decision);
 	}

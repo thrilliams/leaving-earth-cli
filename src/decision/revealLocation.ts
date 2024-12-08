@@ -21,7 +21,7 @@ export async function revealLocation(
 			hazardString += ` ($${hazardEffect.value})`;
 		if (
 			hazardEffect.type === "sickness" ||
-			hazardEffect.type === "radiation"
+			hazardEffect.type === "solar_radiation"
 		)
 			hazardString += ` (d8 <= ${hazardEffect.severity})`;
 	}

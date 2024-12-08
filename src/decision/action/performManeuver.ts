@@ -5,6 +5,7 @@ import {
 	getComponentDefinition,
 	getLocation,
 	getManeuver,
+	getManeuverDuration,
 	getSpacecraft,
 	getSpacecraftMass,
 	getTotalThrustOfRockets,
@@ -71,33 +72,62 @@ async function pickManeuver(
 	const choices: prompts.Choice[] = [];
 	for (const maneuver of location.maneuvers) {
 		const maneuverID: ManeuverID = `${location.id}_to_${maneuver.destinationID}`;
-		choices.push({
-			title: stringifyManeuver(model, maneuverID),
-			value: maneuverID,
-		});
+		for (let i = 0; i < maneuver.profiles.length; i++) {
+			let disabled = false;
+
+			const profile = maneuver.profiles[i];
+			if (profile.slingshot) {
+				const window = model.maneuverWindows[profile.slingshot];
+				if (window === undefined)
+					throw new Error("maneuver window not defined");
+				disabled =
+					(model.year - window.firstYear) % window.interval === 0;
+			}
+
+			choices.push({
+				title: stringifyManeuver(model, maneuverID, i),
+				value: [maneuverID, i],
+				disabled,
+			});
+		}
 	}
 
-	const { maneuverID } = await prompts({
+	const { maneuver } = await prompts({
 		type: "select",
-		name: "maneuverID",
+		name: "maneuver",
 		message: "select maneuver",
 		choices,
 	});
 
-	if (maneuverID === undefined) return performManeuver(model, decision);
+	if (maneuver === undefined) return performManeuver(model, decision);
+	const [maneuverID, profileIndex] = maneuver;
 
-	return pickDurationModifier(model, decision, spacecraftID, maneuverID);
+	return pickDurationModifier(
+		model,
+		decision,
+		spacecraftID,
+		maneuverID,
+		profileIndex
+	);
 }
 
 async function pickDurationModifier(
 	model: Immutable<Model>,
 	decision: Immutable<TakeActionDecision>,
 	spacecraftID: SpacecraftID,
-	maneuverID: ManeuverID
+	maneuverID: ManeuverID,
+	profileIndex: number
 ): Promise<PerformManeuverActionChoice | null> {
 	const maneuver = getManeuver(model, maneuverID);
+	const profile = maneuver.profiles[profileIndex];
+	const maneuverDuration = getManeuverDuration(
+		model,
+		maneuverID,
+		profileIndex
+	);
+
 	let durationModifier = 0;
-	if (maneuver.duration !== undefined) {
+	if (maneuverDuration !== undefined) {
 		const { selectedDurationModifier } = await prompts({
 			type: "number",
 			name: "selectedDurationModifier",
@@ -107,8 +137,8 @@ async function pickDurationModifier(
 
 				const { duration, difficulty } =
 					modifyManeuverDifficultyAndDuration(
-						maneuver.duration || 0,
-						maneuver.difficulty || 0,
+						maneuverDuration || 0,
+						profile.difficulty || 0,
 						this.value
 					);
 
@@ -127,6 +157,7 @@ async function pickDurationModifier(
 		decision,
 		spacecraftID,
 		maneuverID,
+		profileIndex,
 		durationModifier
 	);
 }
@@ -136,6 +167,7 @@ async function pickRockets(
 	decision: Immutable<TakeActionDecision>,
 	spacecraftID: SpacecraftID,
 	maneuverID: ManeuverID,
+	profileIndex: number,
 	durationModifier: number
 ): Promise<PerformManeuverActionChoice | null> {
 	const spacecraft = getSpacecraft(model, spacecraftID);
@@ -155,9 +187,15 @@ async function pickRockets(
 	}
 
 	const maneuver = getManeuver(model, maneuverID);
+	const profile = maneuver.profiles[profileIndex];
+	const maneuverDuration = getManeuverDuration(
+		model,
+		maneuverID,
+		profileIndex
+	);
 	const { duration, difficulty } = modifyManeuverDifficultyAndDuration(
-		maneuver.duration || 0,
-		maneuver.difficulty || 0,
+		maneuverDuration || 0,
+		profile.difficulty || 0,
 		durationModifier
 	);
 
@@ -187,12 +225,13 @@ async function pickRockets(
 		});
 
 		if (selectedRocketIDs === undefined) {
-			if (maneuver.duration !== undefined)
+			if (maneuverDuration !== undefined)
 				return pickDurationModifier(
 					model,
 					decision,
 					spacecraftID,
-					maneuverID
+					maneuverID,
+					profileIndex
 				);
 
 			return pickManeuver(model, decision, spacecraftID);
@@ -211,6 +250,7 @@ async function pickRockets(
 			decision,
 			spacecraftID,
 			maneuverID,
+			profileIndex,
 			durationModifier
 		);
 	}
@@ -219,6 +259,7 @@ async function pickRockets(
 		type: "take_action",
 		action: "perform_maneuver",
 		maneuverID,
+		profileIndex,
 		spacecraftID,
 		durationModifier,
 		rocketIDs,

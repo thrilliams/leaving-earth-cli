@@ -14,7 +14,10 @@ const { expansions, allMissions, missionSetup } = await prompts([
 		type: "multiselect",
 		name: "expansions",
 		message: "select expansions",
-		choices: [{ title: "mercury mini-expansion", value: "mercury" }],
+		choices: [
+			{ title: "mercury mini-expansion", value: "mercury" },
+			{ title: "outer planets", value: "outer_planets" },
+		],
 		instructions: false,
 	},
 	{
@@ -29,19 +32,19 @@ const { expansions, allMissions, missionSetup } = await prompts([
 		message: "select a difficulty preset",
 		choices: [
 			{
-				title: "easy (5 easy missions)",
+				title: "easy (5 easy missions, 3 non-explorable)",
 				value: "easy",
 			},
 			{
-				title: "normal (4 easy and 2 medium missions)",
+				title: "normal (4 easy and 2 medium missions, 4 non-explorable)",
 				value: "normal",
 			},
 			{
-				title: "hard (3 easy, 3 medium, and 2 hard missions)",
+				title: "hard (3 easy, 3 medium, and 2 hard missions, 5 non-explorable)",
 				value: "hard",
 			},
 			{
-				title: "very hard (1 easy, 4 medium, and 4 hard missions)",
+				title: "very hard (1 easy, 4 medium, and 4 hard missions, 6 non-explorable)",
 				value: "veryHard",
 			},
 		],

@@ -15,8 +15,20 @@ export function canResearchAdvancement(
 	if (agency.funds < 10) return false;
 
 	for (const definition of Object.values(model.advancementDefinitions)) {
-		if (!doesAgencyHaveAdvancement(model, decision.agencyID, definition.id))
-			return true;
+		if (doesAgencyHaveAdvancement(model, decision.agencyID, definition.id))
+			continue;
+
+		if (
+			definition.prerequisite &&
+			!doesAgencyHaveAdvancement(
+				model,
+				decision.agencyID,
+				definition.prerequisite
+			)
+		)
+			continue;
+
+		return true;
 	}
 
 	return false;
@@ -31,11 +43,18 @@ export async function researchAdvancement(
 		choices.push({
 			title: definition.id,
 			value: definition.id,
-			disabled: doesAgencyHaveAdvancement(
-				model,
-				decision.agencyID,
-				definition.id
-			),
+			disabled:
+				doesAgencyHaveAdvancement(
+					model,
+					decision.agencyID,
+					definition.id
+				) ||
+				(definition.prerequisite &&
+					!doesAgencyHaveAdvancement(
+						model,
+						decision.agencyID,
+						definition.prerequisite
+					)),
 		});
 	}
 

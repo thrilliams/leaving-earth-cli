@@ -30,6 +30,7 @@ function getBuyableComponents(
 
 		if (
 			"advancementID" in definition &&
+			definition.advancementID &&
 			!doesAgencyHaveAdvancement(
 				model,
 				decision.agencyID,

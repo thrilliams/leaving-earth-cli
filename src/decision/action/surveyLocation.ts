@@ -3,9 +3,11 @@ import {
 	doesAgencyHaveAdvancement,
 	doesSpacecraftHaveWorkingProbeOrCapsule,
 	getAgency,
+	getComponent,
 	getLocation,
 	getSpacecraft,
 	getSurveyableLocations,
+	isComponentOfType,
 } from "leaving-earth/helpers";
 import type {
 	Model,
@@ -14,7 +16,7 @@ import type {
 	TakeActionDecision,
 } from "leaving-earth/model";
 import prompts from "prompts";
-import { stringifySpacecraft } from "../stringifiers";
+import { stringifyComponent, stringifySpacecraft } from "../stringifiers";
 
 function getSpacecraftIDsThatCanSurvey(
 	model: Immutable<Model>,
@@ -86,6 +88,34 @@ export async function surveyLocation(
 	if (spacecraftID === undefined) return null;
 
 	const spacecraft = getSpacecraft(model, spacecraftID);
+
+	const probeOrCapsuleChoices: prompts.Choice[] = [];
+	for (const componentID of spacecraft.componentIDs) {
+		const component = getComponent(model, componentID);
+		if (component.damaged) continue;
+
+		if (
+			!isComponentOfType(model, component, "probe") &&
+			!isComponentOfType(model, component, "capsule")
+		)
+			continue;
+
+		probeOrCapsuleChoices.push({
+			title: stringifyComponent(model, componentID),
+			value: componentID,
+			disabled: model.expansions.includes("outer_planets")
+				? component.surveyedThisTurn
+				: false,
+		});
+	}
+
+	const { componentID } = await prompts({
+		type: "select",
+		name: "componentID",
+		message: "select a probe or capsule",
+		choices: probeOrCapsuleChoices,
+	});
+
 	const surveyableLocationIDs = getSurveyableLocations(
 		model,
 		spacecraft.locationID
@@ -115,5 +145,6 @@ export async function surveyLocation(
 		action: "survey_location",
 		spacecraftID,
 		locationID,
+		componentID,
 	};
 }
