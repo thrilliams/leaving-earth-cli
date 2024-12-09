@@ -81,7 +81,7 @@ async function pickManeuver(
 				if (window === undefined)
 					throw new Error("maneuver window not defined");
 				disabled =
-					(model.year - window.firstYear) % window.interval === 0;
+					(model.year - window.firstYear) % window.interval !== 0;
 			}
 
 			choices.push({
